@@ -562,6 +562,7 @@ jobs:
       prerelease: ${{ needs.get-product-version.outputs.product-version-pre }}
       os: linux
       arch: amd64
+      equivalence-testing-version: v1.0.0
 
     steps:
       # The equivalence tests are executed after a new tag is pushed as this
@@ -610,15 +611,26 @@ jobs:
           name: terraform_${{ env.version }}_${{ env.os }}_${{ env.arch }}.zip
           path: .
 
+      - name: "Download equivalence-testing binary"
+        if: ${{ steps.metadata.outputs.run-equivalence-tests == 'true' }}
+        uses: dsaltares/fetch-gh-release-asset@v1.0.0
+        with:
+          repo: 'hashicorp/terraform-equivalence-testing'
+          version: 'tags/${{ env.equivalence-testing-version }}'
+          file: 'terraform-equivalence-testing_${{ env.equivalence-testing-version }}_${{ env.os }}_${{ env.arch }}.zip'
+          token: ${{ secrets.ELEVATED_GITHUB_TOKEN }}
+
       - name: "Run and update equivalence tests"
         if: ${{ steps.metadata.outputs.run-equivalence-tests == 'true' }}
         run: |
           unzip "./terraform_${{ env.version }}_${{ env.os }}_${{ env.arch }}.zip"
           TERRAFORM_BINARY_PATH="$(pwd)/terraform"
           
-          pushd tools/equivalence-tests
-          
-          go run main.go -tests=testing -goldens=goldens -binary="$TERRAFORM_BINARY_PATH" -update
+          unzip "./terraform-equivalence-testing_${{ env.equivalence-testing-version }}_${{ env.os }}_${{ env.arch }}.zip"
+          ./terraform-equivalence-testing_${{ env.equivalence-testing-version }} update \
+            --tests=testing/equivalence-tests/test-files \
+            --goldens=testing/equivalence-tests/golden-files \
+            --binary="$TERRAFORM_BINARY_PATH"
           
           changed=$(git diff --quiet -- goldens || echo true)
           if [[ $changed == "true" ]]; then
@@ -627,7 +639,7 @@ jobs:
             git config user.email "52939924+teamterraform@users.noreply.github.com"
             git config user.name "The Terraform Team"
           
-            git add ./goldens
+            git add ./testing/equivalence-tests/golden-files
             git commit -m"Automated equivalence test golden file update for release ${{ env.version }}."
             git push
           else
