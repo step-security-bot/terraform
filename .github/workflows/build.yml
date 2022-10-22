@@ -48,7 +48,12 @@ jobs:
       go-ldflags: ${{ steps.get-product-version.outputs.go-ldflags }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - name: Git Describe
         id: git-describe
         run: |
@@ -119,7 +124,12 @@ jobs:
       go-version: ${{ steps.get-go-version.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791
       - name: Determine Go version
         id: get-go-version
         uses: ./.github/actions/go-version
@@ -132,15 +142,20 @@ jobs:
       filepath: ${{ steps.generate-metadata-file.outputs.filepath }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791
       - name: Generate package metadata
         id: generate-metadata-file
-        uses: hashicorp/actions-generate-metadata@v1
+        uses: hashicorp/actions-generate-metadata@90c50194a165052f710b3de28645d60c44d447db
         with:
           version: ${{ needs.get-product-version.outputs.product-version }}
           product: ${{ env.PKG_NAME }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: metadata.json
           path: ${{ steps.generate-metadata-file.outputs.filepath }}
@@ -178,10 +193,15 @@ jobs:
       GO_LDFLAGS: ${{ needs.get-product-version.outputs.go-ldflags }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791
 
       - name: Install Go toolchain
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492
         with:
           go-version: ${{ needs.get-go-version.outputs.go-version }}
 
@@ -213,7 +233,7 @@ jobs:
           go build -ldflags "${GO_LDFLAGS}" -o dist/ .
           zip -r -j out/${{ env.PKG_NAME }}_${FULL_VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}.zip dist/
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: ${{ env.PKG_NAME }}_${{ env.FULL_VERSION }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip
           path: out/${{ env.PKG_NAME }}_${{ env.FULL_VERSION }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip
@@ -239,8 +259,13 @@ jobs:
       version: ${{needs.get-product-version.outputs.product-version}}
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: "Download Terraform CLI package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: clipkg
         with:
           name: terraform_${{ env.version }}_${{ env.os }}_${{ env.arch }}.zip
@@ -251,7 +276,7 @@ jobs:
           (cd dist && unzip "../terraform_${{ env.version }}_${{ env.os }}_${{ env.arch }}.zip")
           mkdir -p out
       - name: Build Linux distribution packages
-        uses: hashicorp/actions-packaging-linux@v1
+        uses: hashicorp/actions-packaging-linux@514d75d0961adeddf1f928fb93b82f41735fc488
         with:
           name: "terraform"
           description: "Terraform enables you to safely and predictably create, change, and improve infrastructure. It is an open source tool that codifies APIs into declarative configuration files that can be shared amongst team members, treated as code, edited, reviewed, and versioned."
@@ -268,12 +293,12 @@ jobs:
           echo "RPM_PACKAGE=$(basename out/*.rpm)" >> $GITHUB_ENV
           echo "DEB_PACKAGE=$(basename out/*.deb)" >> $GITHUB_ENV
       - name: "Save .rpm package"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: ${{ env.RPM_PACKAGE }}
           path: out/${{ env.RPM_PACKAGE }}
       - name: "Save .deb package"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: ${{ env.DEB_PACKAGE }}
           path: out/${{ env.DEB_PACKAGE }}
@@ -307,9 +332,14 @@ jobs:
       version: ${{needs.get-product-version.outputs.product-version}}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791
       - name: Build Docker images
-        uses: hashicorp/actions-docker-build@v1
+        uses: hashicorp/actions-docker-build@b6fbccf195134607a99816f89a608b0f4ab751e3
         with:
           pkg_name: "terraform_${{env.version}}"
           version: ${{env.version}}
@@ -350,10 +380,15 @@ jobs:
       build_script: ./internal/command/e2etest/make-archive.sh
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791
 
       - name: Install Go toolchain
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492
         with:
           go-version: ${{ needs.get-go-version.outputs.go-version }}
 
@@ -369,7 +404,7 @@ jobs:
           # that "terraform version" is returning that version number.
           bash ./internal/command/e2etest/make-archive.sh
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: terraform-e2etest_${{ matrix.goos }}_${{ matrix.goarch }}.zip
           path: internal/command/e2etest/build/terraform-e2etest_${{ matrix.goos }}_${{ matrix.goarch }}.zip
@@ -402,14 +437,19 @@ jobs:
       # and e2etest package for this platform. (This helps ensure that we're
       # really testing the release package and not inadvertently testing a
       # fresh build from source.)
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: "Download e2etest package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: e2etestpkg
         with:
           name: terraform-e2etest_${{ env.os }}_${{ env.arch }}.zip
           path: .
       - name: "Download Terraform CLI package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: clipkg
         with:
           name: terraform_${{env.version}}_${{ env.os }}_${{ env.arch }}.zip
@@ -448,14 +488,19 @@ jobs:
       # and e2etest package for this platform. (This helps ensure that we're
       # really testing the release package and not inadvertently testing a
       # fresh build from source.)
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: "Download e2etest package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: e2etestpkg
         with:
           name: terraform-e2etest_${{ env.os }}_${{ env.arch }}.zip
           path: .
       - name: "Download Terraform CLI package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: clipkg
         with:
           name: terraform_${{env.version}}_${{ env.os }}_${{ env.arch }}.zip
@@ -493,14 +538,19 @@ jobs:
       # and e2etest package for this platform. (This helps ensure that we're
       # really testing the release package and not inadvertently testing a
       # fresh build from source.)
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: "Download e2etest package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: e2etestpkg
         with:
           name: terraform-e2etest_${{ env.os }}_${{ env.arch }}.zip
           path: .
       - name: "Download Terraform CLI package"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869
         id: clipkg
         with:
           name: terraform_${{env.version}}_${{ env.os }}_${{ env.arch }}.zip
@@ -527,14 +577,19 @@ jobs:
       version: ${{needs.get-product-version.outputs.product-version}}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@2e205a28d0e1da00c5f53b161f4067b052c61f34
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791
       # FIXME: We should include some sort of pre-validation step here, to
       # confirm that the doc content is mechanically valid so that the
       # publishing pipeline will be able to render all content without errors.
       - name: "Create documentation source bundle"
         run: |
           (cd website && zip -9 -r ../terraform-cli-docs-source_${{ env.version }}.zip .)
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: terraform-cli-docs-source_${{ env.version }}.zip
           path: terraform-cli-docs-source_${{ env.version }}.zip
