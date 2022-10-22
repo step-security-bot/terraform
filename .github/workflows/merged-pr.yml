@@ -13,7 +13,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v5
+      - uses: actions/github-script@9b7ebbb458768465bb03f28bbef5aa6b5d9d5baf
         with:
           script: |
             github.rest.issues.createComment({
